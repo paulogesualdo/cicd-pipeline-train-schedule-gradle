@@ -29,8 +29,8 @@ task zip(type: Zip) {
       include "routes/**"
       include "views/**"      
    }
-   destinationDir(file("dist"))
-   baseName "trainSchedule"
+   destinationDirectory = file("dist")
+   archiveFileName = "trainSchedule.zip"
 }
 
 // All we need to do, in order for this build to actually run, is to call some of the tasks built in to the node.js and npm plugins. We're going to call them here.
