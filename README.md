@@ -4,6 +4,8 @@ This is a simple train schedule app written using nodejs. It is intended to be u
 
 Some improvements were made in order to update Gradle version for it to be compatible with the latest Java compatible with Jenkins (Java JDK 21). Some deprecated Gradle functions were updated.
 
+An automation was configured to build this project on Jenkins every time this project is modified.
+
 ## Running the app
 
 It is not necessary to run this app locally in order to complete the learning activities, but if you wish to do so you will need a local installation of npm. Begin by installing the npm dependencies with:
