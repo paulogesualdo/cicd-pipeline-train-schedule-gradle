@@ -2,7 +2,7 @@
 
 This is a simple train schedule app written using nodejs. It is intended to be used as a sample application for a series of hands-on learning activities.
 
-Some improvements were made in order to update Gradle version for it to be compatible with the latest Java compatible with Jenkins (Java JDK 21).
+Some improvements were made in order to update Gradle version for it to be compatible with the latest Java compatible with Jenkins (Java JDK 21). Some deprecated Gradle functions were updated.
 
 ## Running the app
 
