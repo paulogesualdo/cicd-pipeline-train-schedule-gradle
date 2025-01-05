@@ -4,7 +4,7 @@ pipeline {
 		stage('Build') {
 			steps {
 				echo "Running build automation"
-				sh './gradlew buil --no-daemon'
+				sh './gradlew build --no-daemon'
 				archiveArtifacts artifacts: 'dist/trainSchedule.zip'
 			}
 		}
@@ -21,8 +21,8 @@ pipeline {
 							sshPublisherDesc(
 								configName: 'staging-server',
 								sshCredentials: [
-									username: "$username",
-									encryptedPassphrase: "$password"
+									username: "${username}",
+									encryptedPassphrase: "${password}"
 								],
 								transfers: [
 									sshTransfer(
@@ -53,8 +53,8 @@ pipeline {
 							sshPublisherDesc(
 								configName: 'production-server',
 								sshCredentials: [
-									username: "$username",
-									encryptedPassphrase: "$password"
+									username: "${username}",
+									encryptedPassphrase: "${password}"
 								],
 								transfers: [
 									sshTransfer(
