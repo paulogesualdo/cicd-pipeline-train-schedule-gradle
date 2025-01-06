@@ -29,22 +29,7 @@ pipeline {
 										sourceFiles: 'dist/trainSchedule.zip',
 										removePrefix: 'dist/',
 										remoteDirectory: '/tmp',
-										execCommand: '
-											echo "Stopping service"
-											&&
-											sudo /usr/bin/systemctl stop train-schedule 
-											&&
-											echo "Removing current project files"
-											&&
-											rm -rf /opt/trainSchedule/*
-											&&
-											echo "Unziping new project files"
-											&&
-											unzip /tmp/trainSchedule.zip -d /opt/trainSchedule
-											&&
-											echo "Starting services"
-											&&
-											sudo /usr/bin/systemctl start train-schedule'
+										execCommand: ' echo "Stopping service" && sudo /usr/bin/systemctl stop train-schedule && echo "Removing current project files" && rm -rf /opt/trainSchedule/* && echo "Unziping new project files" && unzip /tmp/trainSchedule.zip -d /opt/trainSchedule && echo "Starting services" && sudo /usr/bin/systemctl start train-schedule'
 									)
 								]
 							)
