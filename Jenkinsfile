@@ -14,6 +14,9 @@ pipeline {
 			}
 			steps {
 				withCredentials ([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME',passwordVariable: 'USERPASS')]) {
+					echo "Transferring build file to the machine"
+					sh 'sshpass -p "$USERPASS" scp /dist/trainSchedule.zip $USERNAME@3.14.133.134:/opt/'
+					/*
 					sshPublisher (
 						failOnError: true, 
 						continueOnError: false,
@@ -35,9 +38,11 @@ pipeline {
 							)
 						]
 					)
+					*/
 				}
 			}
 		}
+		/*
 		stage('Deploy to production') {
 			when {
 				branch 'master'
@@ -70,5 +75,6 @@ pipeline {
 				}
 			}
 		}
+		*/
 	}
 }
