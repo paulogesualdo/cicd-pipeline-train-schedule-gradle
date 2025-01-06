@@ -15,7 +15,7 @@ pipeline {
 			steps {
 				withCredentials ([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME',passwordVariable: 'USERPASS')]) {
 					echo "Transferring build file to the machine"
-					sh 'sshpass -p "$USERPASS" scp dist/trainSchedule.zip $USERNAME@3.14.133.134:/tmp'
+					sh 'sshpass -p "$USERPASS" scp dist/trainSchedule.zip "$USERNAME"@3.14.133.134:/tmp'
 					/*
 					sshPublisher (
 						failOnError: true, 
