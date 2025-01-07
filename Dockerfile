@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Expose the port that the application is going to listen
-EXPOSE 3000
+EXPOSE 8080
 
 # Start NPM inside the Docker image working directory
 CMD ["npm", "start"]
