@@ -17,11 +17,12 @@ pipeline {
 			steps {
 				script {
 					
-					// Build docker image
+					echo "Building Docker image"
 					app = docker.build("paulogesualdo/train-schedule")
 					
 					// Check if docker image was build correctly. Not working, troubleshooting in progress
 					/*
+					echo "Checking Docker image"
 					app.inside {
 						sh 'echo ${curl localhost:8080}'
 					}
@@ -36,6 +37,8 @@ pipeline {
 			}
 			steps {
 				script {
+					
+					echo "Pushing Docker image"
 					docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
 						app.push("${env.BUILD_NUMBER}")
 						app.push("latest")
@@ -55,23 +58,23 @@ pipeline {
 					
 					script {
 
-						// Execute a shell command on the staging machine to pull the docker image from Docker Hub
+						echo "Executing a shell command on the staging machine to pull the docker image from Docker Hub"
 						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$staging_hostname \"sudo docker pull paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
 						
 						// Prevent the pipeline from failing if either of the commands below fail, because it is expected that they fail sometimes
 						try {
 							
-							// Execute a shell command on the staging machine to stop the train-schedule container if it is running
+							echo "Executing a shell command on the staging machine to stop the train-schedule container if it is running"
 							sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$staging_hostname \"sudo docker stop train-schedule\""
 							
-							// Execute a shell command on the staging machine to remove the train-schedule container if it exists
+							echo "Executing a shell command on the staging machine to remove the train-schedule container if it exists"
 							sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$staging_hostname \"sudo docker rm train-schedule\""
 
 						} catch (err) {
 							echo: 'caucht error $err'
 						}
 
-						// Execute a shell command on the staging machine to reestart the container now and always if it fails
+						echo "Executing a shell command on the staging machine to reestart the container now and always if it fails"
 						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$staging_hostname \"sudo docker run --restart always --name train-schedule -p 8080:8080 -d paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
 
 						// Instructions to deploy directly to a virtual machine, not a container
@@ -118,23 +121,23 @@ pipeline {
 					
 					script {
 
-						// Execute a shell command on the production machine to pull the docker image from Docker Hub
+						echo "Executing a shell command on the production machine to pull the docker image from Docker Hub"
 						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker pull paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
 						
 						// Prevent the pipeline from failing if either of the commands below fail, because it is expected that they fail sometimes
 						try {
 							
-							// Execute a shell command on the production machine to stop the train-schedule container if it is running
+							echo "Executing a shell command on the production machine to stop the train-schedule container if it is running"
 							sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker stop train-schedule\""
 							
-							// Execute a shell command on the production machine to remove the train-schedule container if it exists
+							echo "Executing a shell command on the production machine to remove the train-schedule container if it exists"
 							sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker rm train-schedule\""
 
 						} catch (err) {
 							echo: 'caucht error $err'
 						}
 
-						// Execute a shell command on the production machine to reestart the container now and always if it fails
+						echo "Executing a shell command on the production machine to reestart the container now and always if it fails"
 						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker run --restart always --name train-schedule -p 8080:8080 -d paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
 
 						
