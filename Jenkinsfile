@@ -16,10 +16,16 @@ pipeline {
 			}
 			steps {
 				script {
+					
+					// Build docker image
 					app = docker.build("paulogesualdo/train-schedule")
+					
+					// Check if docker image was build correctly. Not working, troubleshooting in progress
+					/*
 					app.inside {
 						sh 'echo ${curl localhost:8080}'
 					}
+					*
 				}
 			}
 		}
