@@ -71,10 +71,10 @@ pipeline {
 							sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$staging_hostname \"sudo docker rm train-schedule\""
 
 						} catch (err) {
-							echo: 'caucht error $err'
+							echo: 'caught error $err'
 						}
 
-						echo "Executing a shell command on the staging machine to reestart the container now and always if it fails"
+						echo "Executing a shell command on the staging machine to restart the container now and always if it fails"
 						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$staging_hostname \"sudo docker run --restart always --name train-schedule -p 8080:8080 -d paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
 
 						// Instructions to deploy directly to a virtual machine, not a container
@@ -134,10 +134,10 @@ pipeline {
 							sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker rm train-schedule\""
 
 						} catch (err) {
-							echo: 'caucht error $err'
+							echo: 'caught error $err'
 						}
 
-						echo "Executing a shell command on the production machine to reestart the container now and always if it fails"
+						echo "Executing a shell command on the production machine to restart the container now and always if it fails"
 						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker run --restart always --name train-schedule -p 8080:8080 -d paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
 
 						
