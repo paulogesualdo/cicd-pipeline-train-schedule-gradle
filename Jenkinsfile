@@ -134,7 +134,7 @@ pipeline {
 						kubectl apply -f train-schedule-kube.yml
 
 						# Verify the deployment
-						kubectl get deployments train-schedule
+						kubectl get deployments train-schedule-deployment
                     '''
                 }
 
