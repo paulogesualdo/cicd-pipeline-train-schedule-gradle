@@ -1,5 +1,10 @@
 pipeline {
 	agent any
+	
+	environment {
+		DOCKER_IMAGE_NAME = "paulogesualdo/train-schedule"
+	}
+
 	stages {
 		
 		stage('Build') {
@@ -47,6 +52,8 @@ pipeline {
 			}
 		}
 		
+		// Instructions to deploy to a staging environment
+		/*
 		stage('Deploy to staging') {
 			
 			when {
@@ -78,7 +85,6 @@ pipeline {
 						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$staging_hostname \"sudo docker run --restart always --name train-schedule -p 8080:8080 -d paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
 
 						// Instructions to deploy directly to a virtual machine, not a container
-						/*
 						sshPublisher (
 							failOnError: true, 
 							continueOnError: false,
@@ -100,11 +106,11 @@ pipeline {
 								)
 							]
 						)
-						*/
 					}
 				}
 			}
 		}
+		*/
 		
 		stage('Deploy to production') {
 			
@@ -113,10 +119,27 @@ pipeline {
 			}
 			
 			steps {
-				input 'Does the staging environment look OK?'
+				
+				// Ask for a user input before deployment (deactivated)
+				// input 'Does the staging environment look OK?'
 				
 				milestone(1)
 
+				withCredentials([file(credentialsId: 'my-kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh '''
+                        # Set the KUBECONFIG environment variable
+                        export KUBECONFIG="${KUBECONFIG}"
+						
+						# Apply Kubernetes manifests
+						kubectl apply -f train-schedule-kube.yml
+
+						# Verify the deployment
+						kubectl get deployments train-schedule
+                    '''
+                }
+
+				// Instructions to deploy directly to container
+				/*
 				withCredentials ([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME',passwordVariable: 'USERPASS')]) {
 					
 					script {
@@ -142,7 +165,6 @@ pipeline {
 
 						
 						// Instructions to deploy directly to a virtual machine, not a container
-						/*
 						sshPublisher (
 							failOnError: true, 
 							continueOnError: false,
@@ -164,9 +186,9 @@ pipeline {
 								)
 							]
 						)
-						*/
 					}
 				}
+				*/
 			}
 		}
 	}
