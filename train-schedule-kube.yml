@@ -2,6 +2,8 @@ kind: Service
 apiVersion: v1
 metadata:
   name: train-schedule-service
+  annotations:
+    prometheus.io/scrape: 'true'
 spec:
   type: NodePort
   selector:
@@ -31,6 +33,6 @@ spec:
     spec:
       containers:
       - name: train-schedule
-        image: paulogesualdo/train-schedule:latest
+        image: linuxacademycontent/train-schedule:1
         ports:
         - containerPort: 8080
