@@ -214,6 +214,34 @@ pipeline {
 		}
 		*/
 
+		// Deploy to canary test environment on Kubernetes, not directly to the virtual machine neither Docker
+		stage('Canary Deploy - Kubernetes') {
+			
+			when {
+				branch 'master'
+			}
+			
+			environment {
+				CANARY_REPLICAS = 1
+			}
+			
+			steps {
+				
+				withCredentials([file(credentialsId: 'my-kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh '''
+                        # Set the KUBECONFIG environment variable
+                        export KUBECONFIG="${KUBECONFIG}"
+						
+						# Apply Kubernetes manifests
+						kubectl apply -f train-schedule-kube-canary.yml
+
+						# Verify the deployment
+						kubectl get deployments train-schedule-deployment-canary
+                    '''
+                }
+			}
+		}
+
 		// Deploy to a production environment on Kubernetes, not directly to the virtual machine neither Docker
 		stage('Deploy to production - Kubernetes') {
 			
@@ -221,10 +249,14 @@ pipeline {
 				branch 'master'
 			}
 			
+			environment {
+				CANARY_REPLICAS = 0
+			}
+
 			steps {
 				
-				// Ask for a user input before deployment (deactivated)
-				// input 'Does the staging environment look OK?'
+				// Ask for a user input before deployment
+				input 'Does the canary environment look OK?'
 				
 				milestone(1)
 
@@ -233,7 +265,10 @@ pipeline {
                         # Set the KUBECONFIG environment variable
                         export KUBECONFIG="${KUBECONFIG}"
 						
-						# Apply Kubernetes manifests
+						# Apply the canary Kubernetes manifests reducing the replicas to zero
+						kubectl apply -f train-schedule-kube-canary.yml
+
+						# Apply the standard Kubernetes manifests
 						kubectl apply -f train-schedule-kube.yml
 
 						# Verify the deployment
