@@ -233,7 +233,7 @@ pipeline {
                         export KUBECONFIG="${KUBECONFIG}"
 						
 						# Apply Kubernetes manifests
-						kubectl apply -f train-schedule-kube-canary.yml
+						envsubst < train-schedule-kube-canary.yml | kubectl apply -f -
 
 						# Verify the deployment
 						kubectl get deployments train-schedule-deployment-canary
@@ -266,7 +266,7 @@ pipeline {
                         export KUBECONFIG="${KUBECONFIG}"
 						
 						# Apply the canary Kubernetes manifests reducing the replicas to zero
-						kubectl apply -f train-schedule-kube-canary.yml
+						envsubst < train-schedule-kube-canary.yml | kubectl apply -f -
 
 						# Apply the standard Kubernetes manifests
 						kubectl apply -f train-schedule-kube.yml
