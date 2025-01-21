@@ -63,9 +63,8 @@ spec:
   maxReplicas: 4
   metrics:
   - type: Resource
-    pods:
-      metric:
+    resource:
         name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 50
+        target:
+          type: Utilization
+          averageUtilization: 50
