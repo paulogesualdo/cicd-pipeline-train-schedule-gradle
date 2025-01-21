@@ -48,9 +48,48 @@ pipeline {
 			}
 		}
 		
-		// Instructions to deploy to a staging environment
+		// Deploy to a staging environment directly to a virtual machine, not Docker neither Kubernetes
 		/*
-		stage('Deploy to staging') {
+		stage('Deploy to staging - VM') {
+			
+			when {
+				branch 'master'
+			}
+			
+			steps {
+				withCredentials ([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME',passwordVariable: 'USERPASS')]) {
+					
+					script {
+						sshPublisher (
+							failOnError: true, 
+							continueOnError: false,
+							publishers: [
+								sshPublisherDesc(
+									configName: 'staging-server',
+									sshCredentials: [
+										username: "$USERNAME",
+										encryptedPassphrase: "$USERPASS"
+									],
+									transfers: [
+										sshTransfer(
+											sourceFiles: 'dist/trainSchedule.zip',
+											removePrefix: 'dist/',
+											remoteDirectory: '/tmp',
+											execCommand: 'sudo systemctl stop train-schedule && sudo rm -rf /opt/trainSchedule/* && sudo unzip /tmp/trainSchedule.zip -d /opt/trainSchedule && sudo systemctl start train-schedule'
+										)
+									]
+								)
+							]
+						)
+					}
+				}
+			}
+		}
+		*/
+
+		// Deploy to a staging environment on Docker, not directly to the virtual machine neither Kubernetes
+		/*
+		stage('Deploy to staging - Docker') {
 			
 			when {
 				branch 'master'
@@ -79,14 +118,37 @@ pipeline {
 
 						echo "Executing a shell command on the staging machine to restart the container now and always if it fails"
 						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$staging_hostname \"sudo docker run --restart always --name train-schedule -p 8080:8080 -d paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
+					}
+				}
+			}
+		}
+		*/
 
-						// Instructions to deploy directly to a virtual machine, not a container
+		// Deploy to a production environment directly to a virtual machine, not Docker neither Kubernetes
+		/*
+		stage('Deploy to production - VM') {
+			
+			when {
+				branch 'master'
+			}
+			
+			steps {
+				
+				// Ask for a user input before deployment
+				input 'Does the staging environment look OK?'
+				
+				milestone(1)
+
+				withCredentials ([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME',passwordVariable: 'USERPASS')]) {
+					
+					script {
+
 						sshPublisher (
 							failOnError: true, 
 							continueOnError: false,
 							publishers: [
 								sshPublisherDesc(
-									configName: 'staging-server',
+									configName: 'production-server',
 									sshCredentials: [
 										username: "$USERNAME",
 										encryptedPassphrase: "$USERPASS"
@@ -107,8 +169,53 @@ pipeline {
 			}
 		}
 		*/
-		
-		stage('Deploy to production') {
+
+		// Deploy to a production environment on Docker, not directly to the virtual machine neither Kubernetes
+		/*
+		stage('Deploy to production - Docker') {
+			
+			when {
+				branch 'master'
+			}
+			
+			steps {
+				
+				// Ask for a user input before deployment (deactivated)
+				// input 'Does the staging environment look OK?'
+				
+				milestone(1)
+
+				withCredentials ([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME',passwordVariable: 'USERPASS')]) {
+					
+					script {
+
+						echo "Executing a shell command on the production machine to pull the docker image from Docker Hub"
+						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker pull paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
+						
+						// Prevent the pipeline from failing if either of the commands below fail, because it is expected that they fail sometimes
+						try {
+							
+							echo "Executing a shell command on the production machine to stop the train-schedule container if it is running"
+							sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker stop train-schedule\""
+							
+							echo "Executing a shell command on the production machine to remove the train-schedule container if it exists"
+							sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker rm train-schedule\""
+
+						} catch (err) {
+							echo: 'caught error $err'
+						}
+
+						echo "Executing a shell command on the production machine to restart the container now and always if it fails"
+						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker run --restart always --name train-schedule -p 8080:8080 -d paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
+
+					}
+				}
+			}
+		}
+		*/
+
+		// Deploy to a production environment on Kubernetes, not directly to the virtual machine neither Docker
+		stage('Deploy to production - Kubernetes') {
 			
 			when {
 				branch 'master'
@@ -133,58 +240,6 @@ pipeline {
 						kubectl get deployments train-schedule-deployment
                     '''
                 }
-
-				// Instructions to deploy directly to container
-				/*
-				withCredentials ([usernamePassword(credentialsId: 'webserver_login', usernameVariable: 'USERNAME',passwordVariable: 'USERPASS')]) {
-					
-					script {
-
-						echo "Executing a shell command on the production machine to pull the docker image from Docker Hub"
-						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker pull paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
-						
-						// Prevent the pipeline from failing if either of the commands below fail, because it is expected that they fail sometimes
-						try {
-							
-							echo "Executing a shell command on the production machine to stop the train-schedule container if it is running"
-							sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker stop train-schedule\""
-							
-							echo "Executing a shell command on the production machine to remove the train-schedule container if it exists"
-							sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker rm train-schedule\""
-
-						} catch (err) {
-							echo: 'caught error $err'
-						}
-
-						echo "Executing a shell command on the production machine to restart the container now and always if it fails"
-						sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_hostname \"sudo docker run --restart always --name train-schedule -p 8080:8080 -d paulogesualdo/train-schedule:${env.BUILD_NUMBER}\""
-
-						
-						// Instructions to deploy directly to a virtual machine, not a container
-						sshPublisher (
-							failOnError: true, 
-							continueOnError: false,
-							publishers: [
-								sshPublisherDesc(
-									configName: 'production-server',
-									sshCredentials: [
-										username: "$USERNAME",
-										encryptedPassphrase: "$USERPASS"
-									],
-									transfers: [
-										sshTransfer(
-											sourceFiles: 'dist/trainSchedule.zip',
-											removePrefix: 'dist/',
-											remoteDirectory: '/tmp',
-											execCommand: 'sudo systemctl stop train-schedule && sudo rm -rf /opt/trainSchedule/* && sudo unzip /tmp/trainSchedule.zip -d /opt/trainSchedule && sudo systemctl start train-schedule'
-										)
-									]
-								)
-							]
-						)
-					}
-				}
-				*/
 			}
 		}
 	}
