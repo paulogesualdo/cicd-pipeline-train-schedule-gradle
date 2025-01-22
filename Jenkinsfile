@@ -253,6 +253,10 @@ pipeline {
 			}
 			steps {
 				script {
+					
+					// Pause to check the canary deployment for troubleshooting reasons
+					input 'Pause to check canary deployment'
+					
 					sleep (time: 5)
 					def response = httpRequest (
 						url: "http://${kube_node_hostname}:8083/",
