@@ -1,6 +1,11 @@
 pipeline {
+	
 	agent any
 
+	environment {
+		CANARY_REPLICAS = 0
+	}
+	
 	stages {
 		
 		stage('Build') {
@@ -242,6 +247,24 @@ pipeline {
 			}
 		}
 
+		stage('Smoke Test') {
+			when {
+				branch 'master'
+			}
+			steps {
+				script {
+					sleep (time: 5)
+					def response = httpRequest (
+						url: "http://${kube_node_hostname}:8083/",
+						timeout: 30
+					)
+					if (response.status != 200) {
+						error("Smoke test against canary deployment failed")
+					}
+				}
+			}
+		}
+		
 		// Deploy to a production environment on Kubernetes, not directly to the virtual machine neither Docker
 		stage('Deploy to production - Kubernetes') {
 			
@@ -249,14 +272,7 @@ pipeline {
 				branch 'master'
 			}
 			
-			environment {
-				CANARY_REPLICAS = 0
-			}
-
 			steps {
-				
-				// Ask for a user input before deployment
-				input 'Does the canary environment look OK?'
 				
 				milestone(1)
 
@@ -264,9 +280,6 @@ pipeline {
                     sh '''
                         # Set the KUBECONFIG environment variable
                         export KUBECONFIG="${KUBECONFIG}"
-						
-						# Apply the canary Kubernetes manifests reducing the replicas to zero
-						envsubst < train-schedule-kube-canary.yml | kubectl apply -f -
 
 						# Apply the standard Kubernetes manifests
 						kubectl apply -f train-schedule-kube.yml
@@ -275,6 +288,21 @@ pipeline {
 						kubectl get deployments train-schedule-deployment
                     '''
                 }
+			}
+		}
+	}
+
+	post {
+		cleanup {
+			
+			withCredentials([file(credentialsId: 'my-kubeconfig', variable: 'KUBECONFIG')]) {
+				sh '''
+					# Set the KUBECONFIG environment variable
+					export KUBECONFIG="${KUBECONFIG}"
+					
+					# Apply the canary Kubernetes manifests reducing the canary replicas to zero
+					envsubst < train-schedule-kube-canary.yml | kubectl apply -f -
+				'''
 			}
 		}
 	}
