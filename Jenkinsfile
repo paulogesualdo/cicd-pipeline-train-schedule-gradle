@@ -258,11 +258,13 @@ pipeline {
 					input 'Pause to check canary deployment'
 					
 					sleep (time: 5)
-					def response = httpRequest (
-						url: "http://${kube_node_hostname}:8083/",
-						timeout: 30
-					)
-					if (response.status != 200) {
+					
+					def response = sh (
+						script: "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$kube_node_hostname 'curl -s -o /dev/null -w \"%{http_code}\" http://${kube_node_hostname}:8083/'",
+						returnStdout: true
+					).trim()
+					
+					if (response != '200') {
 						error("Smoke test against canary deployment failed")
 					}
 				}
